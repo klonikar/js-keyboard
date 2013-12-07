@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="virtual-keyboard" basedir="." default="compile">
+
+	<!-- Change these two properties to point to tomcat installation on your system -->
+    <property name="server.lib.dir" location="C:\oldPCBackup\apache-tomcat-6.0.14\lib" />
+	<!-- Change these two properties to point to tomcat installation on your system -->
+	
+    <property name="src.dir" value="src"/>
+	<property name="build.dir" value="antbuild"/>
+    <property name="config.dir" value="config"/>
+    <property name="webcontent.dir" value="web" />
+    <property name="classes.dir" value="${build.dir}/WEB-INF/classes"/>
+    <property name="libs" value="lib" />
+
+    <path id="project.class.path">
+	    <fileset dir="${libs}">
+		    <include name="**/*.jar" />
+	    </fileset>
+	    <fileset dir="${server.lib.dir}">
+		    <include name="**/*.jar" />
+	    </fileset>
+    </path>
+
+    <target name="clean" description="Delete all generated files">
+        <delete dir="${build.dir}" failonerror="false"/>
+    </target>
+
+    <target name="compile" description="Compiles the Task">
+        <mkdir dir="${classes.dir}"/>
+		<javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="project.class.path" debug="true" debuglevel="lines,vars,source" compiler="modern">
+				<compilerarg value="-version" />
+		</javac>
+    	<copy todir="${classes.dir}" >
+    		<fileset dir="${config.dir}" >
+    			<exclude name="**/*.xml" />
+    			<include name="**/*.properties" />
+    		</fileset>
+    	</copy>
+    	<copy todir="${build.dir}" >
+    		<fileset dir="${webcontent.dir}" >
+    		</fileset>
+    	</copy>
+    	<copy todir="${build.dir}" >
+    		<fileset dir="${config.dir}" >
+    		</fileset>
+    	</copy>
+    	<copy todir="${build.dir}/WEB-INF/lib" >
+    		<fileset dir="${libs}" >
+    		</fileset>
+    	</copy>
+    </target>
+	
+	<target name="google-upload-mac" depends="compile">
+		<exec command="/Users/klonikar/Downloads/eclipse/plugins/com.google.appengine.eclipse.sdkbundle_1.6.1.v201112160242r37/appengine-java-sdk-1.6.1/bin/appcfg.sh update antbuild">
+		</exec>
+	</target>
+	
+	<target name="google-upload" depends="compile">
+		<exec command="c:\applications\eclipse\plugins\com.google.appengine.eclipse.sdkbundle_1.6.0.v201111171704r37\appengine-java-sdk-1.6.0\bin\appcfg.cmd update antbuild">
+		</exec>
+	</target>
+</project>
+

@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:fb="http://www.facebook.com/2008/fbml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<title>SMALL: Social Media in any Local Language</title>
+<style type="text/css" media="screen">
+
+  #custom-tweet-button a {
+
+    display: block;
+
+    padding: 2px 5px 2px 20px;
+
+    background: url('http://a4.twimg.com/images/favicon.ico') 1px center no-repeat;
+
+    border: 1px solid #ccc;
+    width: 42px;
+
+  }
+
+</style>
+       <script type="text/javascript">
+       VKI_USERKEYBOARD = "US Standard";
+       VKI_LANGUAGES = ["US Standard", "US International", "\u0926\u0947\u0935\u0928\u093e\u0917\u0930\u0940 phonetic", "\u0c95\u0ca8\u0ccd\u0ca8\u0ca1 phonetic", "\u0ba4\u0bae\u0bbf\u0bb4\u0bcd phonetic", "\u0c24\u0c46\u0c32\u0c41\u0c17\u0c41 phonetic", "\u0d2e\u0d32\u0d2f\u0d3e\u0d33\u0d02 phonetic", "\u0a97\u0ac1\u0a9c\u0ab0\u0abe\u0aa4\u0ac0 phonetic", "\u09ac\u09be\u0982\u09b2\u09be phonetic", "\u0a2a\u0a70\u0a1c\u0a3e\u0a2c\u0a40 phonetic", "\u0b13\u0b5c\u0b3f\u0b06 phonetic", "Chinese Bopomofo IME", "Chinese Cangjie IME"];
+
+       var languagesPrefDisplay = null;
+       var languagesPrefDiv = null;
+       var languagesPrefMessage = null;
+       
+       var languagesPrefsNoteId = null;
+       var defaultLanguagePrefNoteId = null;
+
+       function console_log(str)
+       {
+           if(typeof(console) != "undefined")
+               console.log(str);
+       }
+
+       function checkElementInArray(elem, myarray)
+       {
+           for(var i in myarray)
+               if(elem == myarray[i])
+                   return true;
+
+           return false;
+       }
+
+       function showLanguagesPreferencesDisplay(e) {
+           languagesPrefDisplay.style.display = ""; 
+       }
+
+       function saveLangPrefs(e) {
+           var allLanguagesCheckboxes = document.getElementsByName("ycompose_lang_pref");
+           var selectedLanguagesRadioButtons = document.getElementsByName("ycompose_default_lang_pref");
+           var selectedLanguages = [];
+           for(var elem in allLanguagesCheckboxes) {
+               if(allLanguagesCheckboxes[elem].id && allLanguagesCheckboxes[elem].checked) {
+                   selectedLanguages.push(allLanguagesCheckboxes[elem].id);
+               }
+           }
+           var selectedDefaultLanguage;
+           if(selectedLanguagesRadioButtons) {
+               for(var elem in selectedLanguagesRadioButtons) {
+                   if(selectedLanguagesRadioButtons[elem].id && selectedLanguagesRadioButtons[elem].checked) {
+                       selectedDefaultLanguage = selectedLanguagesRadioButtons[elem].id;
+                   }
+               }
+           }
+           if(!selectedDefaultLanguage) {
+               selectedDefaultLanguage = selectedLanguages[0];
+           }
+
+            console_log("current layout: " + VKI_getCurrentLayout());
+            console_log("selected languages: " + selectedLanguages);
+            console_log("selected default layout: " + selectedDefaultLanguage);
+           if(selectedLanguages && selectedLanguages.length > 0)
+           {
+               VKI_LANGUAGES = selectedLanguages;
+               VKI_DEFAULT_KEYBOARD_TYPE = selectedDefaultLanguage; 
+               VKI_setCurrentLayout(VKI_DEFAULT_KEYBOARD_TYPE);
+               VKI_setLayouts(VKI_LANGUAGES);
+           }
+           var langsNotesUrl = '/me/notes';
+           if(languagesPrefsNoteId != null) {
+        	   langsNotesUrl = languagesPrefsNoteId;
+           }
+           var languagesNote = { message: VKI_LANGUAGES.toString(), subject: "Mothertongue-languages" };
+           FB.api(langsNotesUrl, 'post', languagesNote, function(response) {
+        	   console_log("response after saving languages preferences:" + langsNotesUrl);
+        	   console_log(response);
+           });
+           var defNotesUrl = '/me/notes';
+           if(defaultLanguagePrefNoteId != null) {
+        	   defNotesUrl = defaultLanguagePrefNoteId;
+           }
+           var defLanguageNote = { message: VKI_DEFAULT_KEYBOARD_TYPE, subject: "Mothertongue-defaultLanguage" };
+           FB.api(defNotesUrl, 'post', defLanguageNote, function(response) {
+        	   console_log("response after saving default language preference:" + defNotesUrl);
+        	   console_log(response);
+           });
+
+           // Hide the meet-and-greet dialog.
+           languagesPrefDisplay.style.display = "none";
+           e.stopPropagation();
+       }
+       
+       function cancelLangPrefs(e) {
+    	   languagesPrefDisplay.style.display = "none";
+    	   e.stopPropagation();
+       }
+       
+       function toggleDisplay(elem_id) {
+           var elem = document.getElementById(elem_id);
+           if(!elem)
+               return;
+           if(elem.style.display == "")
+               elem.style.display = "none";
+           else if(elem.style.display = "none")
+               elem.style.display = "";
+       }
+
+   </script>
+   <script type="text/javascript" src="keyboard.js" charset="UTF-8"></script>
+   <link rel="stylesheet" type="text/css" href="keyboard.css">
+
+</head>
+<body>
+	<div id="fb-root"></div>
+	<div id="facebookLink" >
+	If you want to access this page within facebook, <a href="http://www.facebook.com/mothertongue?sk=app_298417456871870" target="_blank">click here</a>.
+	</div>
+    <div id="languagesPrefDiv" onclick="showLanguagesPreferencesDisplay()">
+        <p style="color:white;background-color:#627AAC">Click here to change language/keyboard layout options</p>
+		<span id="languagesPrefMessage" style="color:red"></span>
+		
+    <div id="languagesPrefDisplay" style="display:none">
+        <script type="text/javascript">
+        {
+            languagesPrefDiv = document.getElementById("languagesPrefDiv");
+            languagesPrefMessage = document.getElementById("languagesPrefMessage");
+            languagesPrefDisplay = document.getElementById("languagesPrefDisplay");
+            var saveButton = document.createElement("button");
+            saveButton.onclick = saveLangPrefs;
+            saveButton.appendChild(document.createTextNode("Save"));
+            languagesPrefDisplay.appendChild(saveButton);
+            var cancelButton = document.createElement("button");
+            cancelButton.onclick = cancelLangPrefs;
+            cancelButton.appendChild(document.createTextNode("Cancel"));
+            languagesPrefDisplay.appendChild(cancelButton);
+
+            languagesPrefDisplay.appendChild(document.createElement("br"));
+            var kbd_layouts = VKI_getLayouts();
+            var tbl = document.createElement("table");
+            tbl.border = "1";
+            for(ktype in kbd_layouts) {
+                var chkbox = document.createElement("input");
+                chkbox.type = "checkbox";
+                chkbox.name = "ycompose_lang_pref";
+                chkbox.value = kbd_layouts[ktype].name;
+                chkbox.id = ktype;
+                //chkbox.checked = "true";
+                var tr = document.createElement("tr");
+                var td = document.createElement("td");
+                td.appendChild(document.createTextNode(kbd_layouts[ktype].name + " (" + ktype + ") "));
+                tr.appendChild(td);
+                td = document.createElement("td");
+                td.appendChild(chkbox);
+                tr.appendChild(td);
+                tbl.appendChild(tr);
+            }
+            languagesPrefDisplay.appendChild(tbl);
+            saveButton = document.createElement("button");
+            saveButton.onclick = saveLangPrefs;
+            saveButton.appendChild(document.createTextNode("Save"));
+            languagesPrefDisplay.appendChild(saveButton);
+            cancelButton = document.createElement("button");
+            cancelButton.onclick = cancelLangPrefs;
+            cancelButton.appendChild(document.createTextNode("Cancel"));
+            languagesPrefDisplay.appendChild(cancelButton);
+        }
+        </script>
+    </div>
+    </div>
+
+  <table>
+  <tr>
+      <td><fb:login-button autologoutlink="true" perms="status_update,publish_stream,create_note,user_notes,user_about_me,user_likes"></fb:login-button></td>
+  </tr>
+  <tr><td>Enter your message here: </td></tr>
+  <tr><td><textarea id="message" rows="8" cols="50" title="Enter message, then click the facebook or twitter button or copy paste to other input."  class="keyboardInput" ></textarea> </td></tr>
+  </table>
+  <table border="1" style="width:450px;border:1px" >
+  <tbody>
+  <tr>
+      <td><button style="color:white;background-color:#627AAC" onclick="graphStreamPublish(false); return false;" title='Set your own status on facebook wall' >f Status</button> </td>
+      <td>
+      	<span id="custom-tweet-button">
+      		<a href="" id="tweet_button" onclick="tweet('tweet_button');return true;" target="_blank" title='Post a message on twitter'>Tweet</a>
+      	</span>
+      </td>
+  </tr>
+  <tr>
+      <td><button style="color:white;background-color:#627AAC" onclick="graphStreamPublish(true, 'friendSelection'); return false;" title='Post a status on the wall of the selected friend'>f Friend Status</button></td>
+      <td>Select a friend: <select style="width:300px;" id="friendSelection" ></select></td>
+  </tr>
+  <tr>
+      <td><button style="color:white;background-color:#627AAC" onclick="graphStreamPublish(true, 'pageSelection'); return false;" title='Post a status on the wall of the selected page'>f Page Status</button></td>
+      <td>Select a page: <select style="width:300px;" id="pageSelection" ></select></td>
+  </tr>
+
+  </tbody>
+  </table>
+  <div style="display:none" class="fb-like-box" data-href="http://www.facebook.com/platform" data-width="292" data-show-faces="true" data-stream="true" data-header="true"></div>
+  <p><button style="color:white;background-color:#627AAC;display:none" onclick="facebookChat(); return false;" title='Send a message on facebook Chat with the selected friend'>f Chat</button></p>
+  <p><a href="JavaScript:void(0);" onclick="showStream(); return false;" title='Share this app with a friend.' ><img src="share_facebook.png" alt="share on facebook"></img></a> this app with your friends.</p>
+  <div id="login" style="display:none"></div>
+  <div id="name"></div>
+
+    <p>Page Admins: <button onclick='addToPage(); return false;' title='Page Admins to click here to add this app to their page.'>Add to Page</button></p>
+    <p id='msg'></p>
+
+    <script type="text/javascript">
+    	function tweet(tweet_button_id)
+    	{
+    		var elem = document.getElementById(tweet_button_id);
+    		elem.href = "https://twitter.com/share?text=" + document.getElementById('message').value + "&url=https%3A%2F%2Fvirtual-keyboard.appspot.com";
+    	}
+    </script>
+    <script> 
+      function addToPage() {
+
+        // calling the API ...
+        var obj = {
+          method: 'pagetab',
+          redirect_uri: 'https://virtual-keyboard.appspot.com/',
+        };
+
+        FB.ui(obj);
+      }
+    
+    </script>
+
+  <p>If you face any difficulties in using this application, please send a feedback on <a href="http://www.facebook.com/mothertongue" target="_blank"> our facebook wall</a>.</p>
+       <div onclick="toggleDisplay('creditsMessages')">
+           <p style="color:white;background-color:#627AAC" >Credits and Licenses:</p>
+           <span id="creditsMessages" style="display:none;">
+		       <p>Credits: The javascript based multi-lingual keyboard was originally obtained from <a href="http://www.greywyvern.com/code/javascript/keyboard">JavaScript Graphical / Virtual Keyboard Interface</a>.</p>
+		       <p>License: It is available under <a href="http://www.greywyvern.com/code/bsd.txt">BSD license</a>.</p>
+		   </span>
+       </div>
+ 
+<script type="text/javascript">
+	var myFacebookId = null;
+	var myFacebookName = null;
+    window.fbAsyncInit = function() {
+        FB.init({appId: '298417456871870',
+        	channelUrl : '//virtual-keyboard.appspot.com/channel.html', // Channel File
+        	status: true, cookie: true, xfbml: true});
+
+        /* All the events registered */
+        FB.Event.subscribe('auth.login', function(response) {
+            // do something with response
+            login();
+        });
+        FB.Event.subscribe('auth.logout', function(response) {
+            // do something with response
+            logout();
+        });
+
+        FB.getLoginStatus(function(response) {
+              // logged in and connected user, someone you know
+			  if (response.status === 'connected') {
+			    // the user is logged in and connected to your
+			    // app, and response.authResponse supplies
+			    // the user's ID, a valid access token, a signed
+			    // request, and the time the access token 
+			    // and signed request each expire
+			    var uid = response.authResponse.userID;
+			    var accessToken = response.authResponse.accessToken;
+			    login();
+			  } else if (response.status === 'not_authorized') {
+			    // the user is logged in to Facebook, 
+			    //but not connected to the app
+				login();
+			  } else {
+			    // the user isn't even logged in to Facebook.
+			  }
+        });
+    };
+    // Load the SDK Asynchronously
+    (function(d){
+       var js, id = 'facebook-jssdk'; if (d.getElementById(id)) {return;}
+       js = d.createElement('script'); js.id = id; js.async = true; js.type = 'text/javascript';
+       js.src = document.location.protocol + "//connect.facebook.net/en_US/all.js";
+       d.getElementsByTagName('head')[0].appendChild(js);
+       //d.getElementById('fb-root').appendChild(e);
+     }(document));
+
+    function login(){
+    	FB.api('/me', function(response) {
+            document.getElementById('login').style.display = "block";
+            document.getElementById('login').innerHTML = response.name + " succsessfully logged in!";
+            myFacebookId = response.id;
+            myFacebookName = response.name;
+        });
+        FB.api('/me/friends', function(response) {
+        	if(! response || !response.data)
+        		return; // Possibly no permission or not logged in.
+        	
+           	var friendSelection = document.getElementById('friendSelection');
+           	while(friendSelection.options.length > 0)
+           	{
+           		friendSelection.options.remove(0);
+           	}
+			for(var i in response.data)
+			{
+				var objOption = document.createElement("option");
+				objOption.text = response.data[i].name;
+				objOption.value = response.data[i].id;
+				friendSelection.add(objOption);
+			}
+        });
+        FB.api('/me/likes', function(response) {
+        	if(! response || !response.data)
+        		return; // Possibly no permission or not logged in.
+        	
+            var pageSelection = document.getElementById('pageSelection');
+            while(pageSelection.options.length > 0)
+            {
+            	pageSelection.options.remove(0);
+            }
+			for(var i in response.data)
+			{
+				var objOption = document.createElement("option");
+				objOption.text = response.data[i].name + " (" + response.data[i].category + ")";
+				objOption.value = response.data[i].id;
+				pageSelection.add(objOption);
+			}
+        });
+
+        FB.api('/me/notes?fields=id,subject,message,updated_time', function(response) {
+        	var notePrefix = "<div><p>";
+        	var notePostfix = "</p></div>";
+			var defLanguage = null;
+			var languagesPreferred = null;
+        	for(var i in response.data)
+			{
+        		var note = response.data[i];
+        		var message = note.message;
+        		message = message.substr(notePrefix.length, message.length-notePrefix.length-notePostfix.length);
+        		if(note.subject == "Mothertongue-languages") {
+	        		languagesPrefsNoteId = note.id;
+	        		languagesPreferred = message.split(",");
+        		}
+        		else if(note.subject == "Mothertongue-defaultLanguage") {
+        			defaultLanguagePrefNoteId = note.id;
+        			defLanguage = message;
+        		}
+			}
+        	if(!languagesPreferred || languagesPreferred.length == 0)
+        	{
+        		languagesPrefMessage.innerHTML += "No language preferences specified. Please specify languages/keyboard layouts and save.";
+                showLanguagesPreferencesDisplay();
+                return;
+        	}
+
+        	VKI_LANGUAGES = languagesPreferred;
+        	if(defLanguage && defLanguage.length > 0 && checkElementInArray(defLanguage, VKI_LANGUAGES))
+        		VKI_DEFAULT_KEYBOARD_TYPE = defLanguage;
+        	else
+        		VKI_DEFAULT_KEYBOARD_TYPE = VKI_LANGUAGES[0];
+        	
+    		VKI_setCurrentLayout(VKI_DEFAULT_KEYBOARD_TYPE);
+    		VKI_setLayouts(VKI_LANGUAGES);
+    		
+            // Build UI for default language options once set of languages are available.
+            languagesPrefDisplay.appendChild(document.createElement("br"));
+            languagesPrefDisplay.appendChild(document.createTextNode("Change default keyboard layout"));
+            languagesPrefDisplay.appendChild(document.createElement("br"));
+            var tbl = document.createElement("table");
+            tbl.border = "1";
+            for(var lang in VKI_LANGUAGES) {
+                var elem = document.getElementById(VKI_LANGUAGES[lang]);
+                if(elem) {
+                    elem.checked = true;
+                }    
+                var radioButton = document.createElement("input");
+                radioButton.type = "radio";
+                radioButton.name = "ycompose_default_lang_pref";
+                radioButton.value = VKI_LANGUAGES[lang];
+                radioButton.id = VKI_LANGUAGES[lang];
+                if(VKI_DEFAULT_KEYBOARD_TYPE == VKI_LANGUAGES[lang])
+                    radioButton.checked = "true";
+
+                var tr = document.createElement("tr");
+                var td = document.createElement("td");
+                td.appendChild(document.createTextNode(VKI_LANGUAGES[lang]));
+                tr.appendChild(td);
+                td = document.createElement("td");
+                td.appendChild(radioButton);
+                tr.appendChild(td);
+                tbl.appendChild(tr);
+            }
+            languagesPrefDisplay.appendChild(tbl);
+            var saveButton = document.createElement("button");
+            saveButton.onclick = saveLangPrefs;
+            saveButton.appendChild(document.createTextNode("Save"));
+            languagesPrefDisplay.appendChild(saveButton);
+            var cancelButton = document.createElement("button");
+            cancelButton.onclick = cancelLangPrefs;
+            cancelButton.appendChild(document.createTextNode("Cancel"));
+            languagesPrefDisplay.appendChild(cancelButton);
+            languagesPrefDisplay.appendChild(document.createElement("br"));
+
+        });
+    }
+    
+    function logout(){
+        document.getElementById('login').style.display = "none";
+    }
+    //stream publish method
+    function streamPublish(name, description, hrefTitle, hrefLink, userPrompt){
+        FB.ui(
+        {
+            method: 'stream.publish',
+            message: '',
+            attachment: {
+                name: name,
+                caption: '',
+                description: (description),
+                href: hrefLink
+            },
+            action_links: [
+                { text: hrefTitle, href: hrefLink }
+            ],
+            user_prompt_message: userPrompt
+        },
+        function(response) {
+
+        });
+
+    }
+    function showStream(){
+        FB.api('/me', function(response) {
+            //console.log(response.id);
+            streamPublish(response.name, 'Virtual Keyboard allows you to type in 92 languages', 'Virtual Keyboard', 'http://virtual-keyboard.appspot.com', "Share virtual-keyboard.appspot.com");
+        });
+    }
+
+    function share(){
+        var share = {
+            method: 'stream.share',
+            u: 'http://virtual-keyboard.appspot.com/'
+        };
+
+        FB.ui(share, function(response) { console.log(response); });
+    }
+
+    function graphStreamPublish(otherUser, elemId){
+        var body = document.getElementById("message").value;
+        var toUser = "me";
+        if(otherUser)
+        {
+        	toUser = document.getElementById(elemId).value;
+        }
+        FB.api('/' + toUser + '/feed', 'post', { message: body }, function(response) {
+            if (!response || response.error) {
+                alert('Error occured: ' + (response && response.error ? response.error.message : ""));
+            } else {
+                alert('Status posted successfully. Post ID: ' + response.id);
+            }
+        });
+    }
+
+    function fqlQuery(){
+        FB.api('/me', function(response) {
+             var query = FB.Data.query('select name, hometown_location, sex, pic_square from user where uid={0}', response.id);
+             query.wait(function(rows) {
+               
+               document.getElementById('name').innerHTML =
+                 'Your name: ' + rows[0].name + "<br />" +
+                 '<img src="' + rows[0].pic_square + '" alt="" />' + "<br />";
+             });
+        });
+    }
+    
+    function setStatus(){
+        status1 = document.getElementById("message").value;
+        FB.api(
+          {
+            method: 'status.set',
+            status: status1
+          },
+          function(response) {
+            if (response == 0){
+                alert('Your facebook status not updated. Give Status Update Permission.');
+            }
+            else{
+                alert('Your facebook status updated');
+            }
+          }
+        );
+    }
+    
+    function VKI_createCORSRequest(b,c,a)
+    {
+    	if(!window.XMLHttpRequest)
+    		return null;
+    	var d=new XMLHttpRequest();
+    	d.withCredentials = "true";
+    	if("withCredentials" in d) {
+    		d.open(b,c,false);d.setRequestHeader('Content-type',a);
+    	}
+    	else if(window.XDomainRequest) {
+    		d=new XDomainRequest();d.open(b,c);
+    	}
+    	else d=null;
+    	
+    	return d;
+   	}
+    
+    var facebookChatUrl = "http://www.facebook.com/ajax/chat/send.php?__a=1";
+    var xmlhttp = VKI_createCORSRequest("POST", facebookChatUrl, "application/x-www-form-urlencoded; charset=UTF-8");
+
+    function facebookChat() {
+    	//document.domain = "facebook.com";
+    	var msg_id = "1327742272328";
+    	var msg_text = document.getElementById("message").value;
+    	var toUser = document.getElementById('friendSelection').value;
+    	var fromUser = myFacebookId;
+    	var postForm = "msg_id=" + msg_id + "&client_time=1327742273855&to=" + toUser + "&num_tabs=1&pvs_time&msg_text=" + msg_text + "&to_offline=true&to_idle=false&window_id=2160580028&presence=0&presenceTime=1327742273855&clock=1327742272330&sidebar_launched=true&sidebar_enabled=true&sidebar_capable=true&sidebar_should_show=true&sidebar_visible=true&post_form_id=2dbe900008feddd82e9b272bd15c48bf&fb_dtsg=AQA8I-EQ&lsd&post_form_id_source=AsyncRequest&__user=" + fromUser + "&phstamp=16581655673456981517";
+    	if(typeof(console) != "undefined")
+    		console.log(xmlhttp);
+    	
+    	xmlhttp.send(postForm);
+    }
+</script>
+<div id="keyWordsForSearchEngines" style="display:none">
+Multi lingual virtual keyboard. You can type in any language of your choice. You might always have wanted to
+type in your mothertongue without having to spell it out in english. Why take crutches of english when you
+want to communicate in your mothertongue. Transliteration should always be the last resort when communicating in your mothertongue.
+It is only a workaround due to a lack of keyboards in your language.
+
+العربية (Arabic) 	
+অসমীয়া (Assamese) 	
+Азәрбајҹанҹа (Azerbaijani Cyrillic) 	
+Azərbaycanca (Azerbaijani Latin) 	
+Беларуская (Belarusian) 	
+Belgische / Belge (Belgian) 	
+Български Фонетичен (Bulgarian Phonetic) 	
+Български (Bulgarian BDS) 	
+বাংলা (Bengali) 	
+Bosanski (Bosnian) 	
+Canadienne-française (Canadian French) 	
+Česky (Czech) 	
+Dansk (Danish) 	
+Deutsch (German) 	
+Dingbats (Dingbats) 	
+ދިވެހިބަސް (Divehi) 	
+Dvorak (Dvorak) 	
+Ελληνικά (Greek) 	
+Eesti (Estonian) 	
+Español (Spanish) 	
+دری (Dari) 	
+فارسی (Farsi) 	
+Føroyskt (Faeroese) 	
+Français (French) 	
+Gaeilge (Irish / Gaelic) 	
+ગુજરાતી (Gujarati) 	
+עברית (Hebrew) 	
+देवनागरी phonetic (Devanagari phonetic) 	
+देवनागरी (Devanagari) 	
+हिंदी (Hindi) 	
+Hrvatski (Croatian) 	
+Հայերեն արեւմուտք (Western Armenian) 	
+Հայերեն արեւելք (Eastern Armenian) 	
+Íslenska (Icelandic) 	
+Italiano (Italian) 	
+日本語 (Japanese Hiragana/Katakana) 	
+ქართული (Georgian) 	
+Қазақша (Kazakh) 	
+ភាសាខ្មែរ (Khmer) 	
+ಕನ್ನಡ (Kannada) 	
+한국어 (Korean) 	
+Kurdî (Kurdish) 	
+Кыргызча (Kyrgyz) 	
+Latviešu (Latvian) 	
+Lietuvių (Lithuanian) 	
+Magyar (Hungarian) 	
+Malti (Maltese 48) 	
+Македонски (Macedonian Cyrillic) 	
+മലയാളം (Malayalam) 	
+Misc. Symbols (Misc. Symbols) 	
+Монгол (Mongolian Cyrillic) 	
+मराठी (Marathi) 	
+မြန်မာဘာသာ (Burmese) 	
+Nederlands (Dutch) 	
+Norsk (Norwegian) 	
+پښتو (Pashto) 	
+ਪੰਜਾਬੀ (Punjabi (Gurmukhi)) 	
+拼音 (Pinyin) (Pinyin) 	
+Polski (Polish (214)) 	
+Polski Programisty (Polish Programmers) 	
+Português Brasileiro (Portuguese (Brazil)) 	
+Português (Portuguese) 	
+Română (Romanian) 	
+Русский (Russian) 	
+Schweizerdeutsch (Swiss German) 	
+Shqip (Albanian) 	
+Slovenčina (Slovak) 	
+Slovenščina (Slovenian) 	
+српски (Serbian Cyrillic) 	
+Srpski (Serbian Latin) 	
+Suomi (Finnish) 	
+Svenska (Swedish) 	
+Swiss Français (Swiss French) 	
+ܣܘܪܝܝܐ (Syriac) 	
+தமிழ் (Tamil) 	
+తెలుగు (Telugu) 	
+Tiếng Việt (Vietnamese) 	
+ไทย Kedmanee (Thai Kedmanee) 	
+ไทย Pattachote (Thai Pattachote) 	
+Татарча (Tatar) 	
+Türkçe F (Turkish F) 	
+Türkçe Q (Turkish Q) 	
+Українська (Ukrainian) 	
+United Kingdom (United Kingdom) 	
+اردو (Urdu) 	
+اردو Phonetic (Urdu Phonetic) 	
+US Standard (US Standard) 	
+US International (US International) 	
+Ўзбекча (Uzbek Cyrillic) 	
+ייִדיש (Yiddish) 	
+ייִדיש לעבט (Yiddish (Yidish Lebt)) 	
+中文注音符号 (Chinese Bopomofo IME) 	
+中文仓颉输入法 (Chinese Cangjie IME) 
+</div>
+</body>
+</html>
+

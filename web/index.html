@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:fb="http://www.facebook.com/2008/fbml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<title>SMALL: Social Media in any Local Language</title>
+<style type="text/css" media="screen">
+
+  #custom-tweet-button a {
+
+    display: block;
+
+    padding: 2px 5px 2px 20px;
+
+    background: url('http://a4.twimg.com/images/favicon.ico') 1px center no-repeat;
+
+    border: 1px solid #ccc;
+    width: 42px;
+
+  }
+
+</style>
+<script type="text/javascript">
+       VKI_USERKEYBOARD = "US Standard";
+       VKI_LANGUAGES = ["US Standard", "US International", "Misc. Symbols", "\u0926\u0947\u0935\u0928\u093e\u0917\u0930\u0940 phonetic", "\u0c95\u0ca8\u0ccd\u0ca8\u0ca1 phonetic", "\u0ba4\u0bae\u0bbf\u0bb4\u0bcd phonetic", "\u0c24\u0c46\u0c32\u0c41\u0c17\u0c41 phonetic", "\u0d2e\u0d32\u0d2f\u0d3e\u0d33\u0d02 phonetic", "\u0a97\u0ac1\u0a9c\u0ab0\u0abe\u0aa4\u0ac0 phonetic", "\u09ac\u09be\u0982\u09b2\u09be phonetic", "\u0a2a\u0a70\u0a1c\u0a3e\u0a2c\u0a40 phonetic", "\u0b13\u0b5c\u0b3f\u0b06 phonetic", "Chinese Bopomofo IME", "Chinese Cangjie IME"];
+	   var myFacebookId = null;
+	   var myFacebookName = null;
+	   var currentUserId = null;
+	   var currentUserName = null;
+	   var currentUserImage = null;
+	   var currentLocation = null;
+	   
+       var languagesPrefDisplay = null;
+       var languagesPrefDiv = null;
+       var languagesPrefMessage = null;
+       
+       var languagesPrefsNoteId = null;
+       var defaultLanguagePrefNoteId = null;
+
+       function determineLocation() {
+    	   if (navigator.geolocation) {
+    		   navigator.geolocation.getCurrentPosition(function(position) {
+    			   currentLocation = position;
+    			   console_log(position);
+    		   }, function(error) {
+    			   console_log(error);
+    		   } );
+    		 }
+       }
+
+       function isMobileBrowser() {
+    	   console_log(navigator);
+    	   // alert('appName: ' + navigator.appName + ', appCodeName: ' + navigator.appCodeName + ', userAgent: ' + navigator.userAgent + ", appVersion: " + navigator.appVersion + ", platform: " + navigator.platform + ", onLine: " + navigator.onLine);
+    	   return /SymbianOS|S60|SymbOS|Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent);
+       }
+       
+       function console_log(str)
+       {
+           if(typeof(console) != "undefined")
+               console.log(str);
+       }
+
+       function checkElementInArray(elem, myarray)
+       {
+           for(var i in myarray)
+               if(elem == myarray[i])
+                   return true;
+
+           return false;
+       }
+
+       function showLanguagesPreferencesDisplay(e) {
+           languagesPrefDisplay.style.display = ""; 
+       }
+       
+       function saveLangPrefs(e) {
+           var allLanguagesCheckboxes = document.getElementsByName("ycompose_lang_pref");
+           var selectedLanguagesRadioButtons = document.getElementsByName("ycompose_default_lang_pref");
+           var selectedLanguages = [];
+           for(var elem in allLanguagesCheckboxes) {
+               if(allLanguagesCheckboxes[elem].id && allLanguagesCheckboxes[elem].checked) {
+                   selectedLanguages.push(allLanguagesCheckboxes[elem].id);
+               }
+           }
+           var selectedDefaultLanguage;
+           if(selectedLanguagesRadioButtons) {
+               for(var elem in selectedLanguagesRadioButtons) {
+                   if(selectedLanguagesRadioButtons[elem].id && selectedLanguagesRadioButtons[elem].checked) {
+                       selectedDefaultLanguage = selectedLanguagesRadioButtons[elem].id;
+                   }
+               }
+           }
+           if(!selectedDefaultLanguage) {
+               selectedDefaultLanguage = selectedLanguages[0];
+           }
+
+            console_log("current layout: " + VKI_getCurrentLayout());
+            console_log("selected languages: " + selectedLanguages);
+            console_log("selected default layout: " + selectedDefaultLanguage);
+           if(selectedLanguages && selectedLanguages.length > 0)
+           {
+               VKI_LANGUAGES = selectedLanguages;
+               VKI_DEFAULT_KEYBOARD_TYPE = selectedDefaultLanguage; 
+               VKI_setCurrentLayout(VKI_DEFAULT_KEYBOARD_TYPE);
+               VKI_setLayouts(VKI_LANGUAGES);
+           }
+           var langsNotesUrl = '/me/notes';
+           if(languagesPrefsNoteId != null) {
+        	   langsNotesUrl = languagesPrefsNoteId;
+           }
+           var languagesNote = { message: VKI_LANGUAGES.toString(), subject: "Mothertongue-languages" };
+           FB.api(langsNotesUrl, 'post', languagesNote, function(response) {
+        	   console_log("response after saving languages preferences:" + langsNotesUrl);
+        	   console_log(response);
+           });
+           var defNotesUrl = '/me/notes';
+           if(defaultLanguagePrefNoteId != null) {
+        	   defNotesUrl = defaultLanguagePrefNoteId;
+           }
+           var defLanguageNote = { message: VKI_DEFAULT_KEYBOARD_TYPE, subject: "Mothertongue-defaultLanguage" };
+           FB.api(defNotesUrl, 'post', defLanguageNote, function(response) {
+        	   console_log("response after saving default language preference:" + defNotesUrl);
+        	   console_log(response);
+           });
+
+           // Hide the meet-and-greet dialog.
+           languagesPrefDisplay.style.display = "none";
+           e.stopPropagation();
+       }
+       
+       function cancelLangPrefs(e) {
+    	   languagesPrefDisplay.style.display = "none";
+    	   e.stopPropagation();
+       }
+       
+       function toggleDisplay(elem_id) {
+           var elem = document.getElementById(elem_id);
+           if(!elem)
+               return;
+           if(elem.style.display == "")
+               elem.style.display = "none";
+           else if(elem.style.display = "none")
+               elem.style.display = "";
+       }
+
+       var VKI_customEnterHandler = function(keyboardObject) {
+    	   
+    	   return true;
+       }
+       
+       var VKI_customTextAreaEnterHandler = function(keyboardObject) {
+    	   var elem = keyboardObject.VKI_target;
+    	   if(elem.id == 'message') {
+    		   return true;
+    	   }
+    	   console_log("Posting comment on: " + elem.id + " with text: " + elem.value + ".");
+    	   postComment(elem.id, elem.value, function(response) {
+    		   if (!response || response.error) {
+                   alert('Error occured: ' + (response && response.error ? response.error.message : ""));
+               } else {
+            	   elem.value = "";
+                   alert('Comment posted successfully. Comment ID: ' + response.id);
+               }
+    	   });
+    	   return false;
+       }
+       
+       function tweet(tweet_button_id)
+   	   {
+   		   var elem = document.getElementById(tweet_button_id);
+   		   elem.href = "https://twitter.com/share?text=" + document.getElementById('message').value + "&url=https%3A%2F%2Fvirtual-keyboard.appspot.com";
+   	   }
+       
+       function addToPage() {
+
+       	// calling the API ...
+       	var obj = {
+         		method: 'pagetab',
+         		redirect_uri: 'https://virtual-keyboard.appspot.com/',
+       	};
+
+       	FB.ui(obj);
+     }
+
+       function postComment(objectId, comment, respHandler) {
+       	FB.api('/' + objectId + '/comments', 'post', {message: comment}, respHandler);
+       }
+       
+       function deleteObject(objectId, respHandler) {
+       	FB.api('/' + objectId, 'delete', respHandler);	
+       }
+       
+       function likeObject(objectId, respHandler) {
+       	FB.api('/' + objectId + '/likes', 'post', respHandler);
+       }
+       
+       function unlikeObject(objectId, respHandler) {
+       	FB.api('/' + objectId + '/likes', 'delete', respHandler);
+       }
+
+     function processUserWallResponse(response) {
+    	console_log(response);
+ 		var objs = response.data;
+		var q = 'select id,name,pic_square,pic_small,type from profile where id in (0';
+		for(var o in objs) {
+			if(objs[o].from) {
+				q += "," + objs[o].from.id;
+			}
+		}
+		q += ")";
+		FB.api({method: 'fql.query', query: q}, function(feedObjects) {
+			var feeds = feedObjects;
+			var speechSupported = doesBrowserSupportSpeechElement();
+			return function(users) {
+				var userStream = document.getElementById("mothertongue_userStreams");
+				while( userStream.firstChild ) {
+					userStream.removeChild( userStream.firstChild );
+		        }
+				var tbl = document.createElement("table");
+				var tbody = document.createElement("tbody");
+				var usersMap = {};
+				for(var u in users) {
+					usersMap[users[u].id.toString()] = users[u];
+				}
+
+				for(var o in feeds) {
+					var obj = feeds[o];
+					var str = obj.message || obj.story || obj.description || "";
+					var tr = document.createElement("tr");
+					var td = document.createElement("td");
+					td.style.borderWidth = "1px";
+					td.style.borderStyle = "solid";
+					td.style.borderColor = "#E9E9E9";
+					td.style.color = "#333";
+					td.style.fontSize = "13px";
+					td.style.lineHeight = "1.38";
+					//td.style.width = "750px";
+					var span = document.createElement("span");
+					var from = obj.from;
+					if(from) {
+						var u = usersMap[from.id.toString()];
+			            var userWallLink = document.createElement("a");
+			            userWallLink.href = "JavaScript:void(0);";
+			            userWallLink.onclick = createLinkHandler(from.id, from.name, u.pic_square);
+			            if(u.pic_square) {
+			            	var img = document.createElement("img");
+			            	if(u.type == "group")
+			            		img.src = u.pic_small;
+			            	else
+			            		img.src = u.pic_square;
+			            	
+			            	img.alt = u.name;
+			            	userWallLink.appendChild(img);
+			            }
+			            userWallLink.appendChild(document.createTextNode(from.name));
+
+			            userWallLink.style.fontWeight = "bold";
+			            userWallLink.style.color = "#3B5998";
+						span.appendChild(userWallLink);
+						span.appendChild(document.createElement("br"));
+					}
+					span.appendChild(document.createTextNode(str));
+					td.appendChild(span);
+					if(str && str.length > 0) {
+						var speakerImage = document.createElement("img");
+						speakerImage.src = "speaker.jpeg";
+						speakerImage.onclick = createSpeakerHandler(str);
+						td.appendChild(speakerImage);
+					}
+					td.appendChild(document.createElement("br"));
+					td.appendChild(processUserWallItem(obj));
+					td.appendChild(createUserStreamComments(obj, speechSupported, null));
+					tr.appendChild(td);
+					tbody.appendChild(tr);
+				}
+				tbl.appendChild(tbody);
+				userStream.appendChild(tbl);				
+			};
+		}(objs));
+     }
+     
+     function showSelectedUserWall(userId, userName, userImage) {
+         var name = document.getElementById('name');
+         if(userImage) {
+         	name.innerHTML = name.innerText = 
+            	'<img src="' + userImage + '" alt="' + userName + '" />' +
+            	'<b>' + userName + "</b> <br/>"
+            ;
+         }
+         else {
+        	 name.innerHTML = name.innerText = '<b>' + userName + "</b> <br/>";
+         }
+         name.style.display = "block";
+         
+         currentUserId = userId;
+         FB.api('/'+userId+'/feed', processUserWallResponse);
+         
+      	 return false;    	 
+     }
+
+     function createLinkHandler(id, name, img) {
+    	 var pageId = id;
+    	 var pageName = name;
+    	 var pageImg = img;
+    	 return function() { return showSelectedUserWall(pageId, pageName, pageImg); };
+     }
+     
+     function createSpeakerHandler(str) {
+    	 var strToBeSpoken = str;
+    	 return function() { speak(strToBeSpoken); };
+     }
+     
+     function createCommentLI(setBackgroundColor) {
+		 var li = document.createElement('li');
+		 if(setBackgroundColor)
+		 	li.style.backgroundColor = '#EDEFF4';
+		 
+		 li.style.color = '#333';
+		 li.style.fontSize = '11px';
+		 li.style.lineHeight = '1.28';
+		 li.style.marginTop = "1px";
+		 li.style.paddingTop = "5px";
+		 li.style.paddingRight = "5px";
+		 li.style.paddingBottom = "4px";
+		 li.style.paddingLeft = "5px";
+		 //li.style.listStyleType = "none";
+		 li.style.fontFamily = 'lucida grande,tahoma,verdana,arial,sans-serif';
+		 return li;    	 
+     }
+     
+     function createUserStreamComments(obj, speechSupported, linkStats) {
+    	 var ul = document.createElement('ul');
+    	 ul.style.listStyleType = "none";
+    	 var comments = obj.comments.comment_list || obj.comments.data;
+    	 var likes = obj.likes;
+    	 if(likes && likes.count > 0) {
+    		 var li = createCommentLI(true);
+    		 var str = likes.count + " people like this";
+    		 li.appendChild(document.createTextNode(str));
+    		 if(likes.data) {
+    			 str = " (";
+        		 li.appendChild(document.createTextNode(str));
+    			 for(var i in likes.data) {
+    				 var userWallLink = document.createElement("a");
+			         userWallLink.href = "JavaScript:void(0);";
+			         userWallLink.onclick = createLinkHandler(likes.data[i].id, likes.data[i].name, null);
+			         userWallLink.appendChild(document.createTextNode(likes.data[i].name));
+			         //userWallLink.style.fontWeight = "bold";
+			         userWallLink.style.color = "#3B5998";
+			         li.appendChild(userWallLink);
+			         if(i < likes.data.length - 1) {
+			        	 str = ", ";
+	    	    		 li.appendChild(document.createTextNode(str));
+			         }
+    				 
+    			 }
+    			 str = "";
+    			 if((likes.count - likes.data.length) > 0)
+    			 	str = " and " + (likes.count - likes.data.length) + " others";
+    			 str += ")";
+	    		 li.appendChild(document.createTextNode(str));
+    		 }
+    		 else if(likes.friends.length > 0 || likes.sample.length > 0) {
+    			 var q = 'select id,name,type from profile where id in (0';
+    			 for(var i in likes.friends) {
+    				 q += "," + likes.friends[i];
+    			 }
+    			 for(var i in likes.sample) {
+    				 q += "," + likes.sample[i];
+    			 }
+    			 q += ")";
+    			 FB.api({method: 'fql.query', query: q}, function(likesLI, likesObj) {
+    				 var li = likesLI;
+    				 var likes = likesObj;
+    				 return function(users) {
+							var str = " (";
+			        		li.appendChild(document.createTextNode(str));
+							for(var i in users) {
+			    				 var userWallLink = document.createElement("a");
+						         userWallLink.href = "JavaScript:void(0);";
+						         userWallLink.onclick = createLinkHandler(users[i].id, users[i].name, null);
+						         userWallLink.appendChild(document.createTextNode(users[i].name));
+						         //userWallLink.style.fontWeight = "bold";
+						         userWallLink.style.color = "#3B5998";
+						         li.appendChild(userWallLink);
+						         if(i < users.length - 1) {
+						        	 str = ", ";
+				    	    		 li.appendChild(document.createTextNode(str));
+						         }
+							}
+							str = "";
+							if((likes.count - likes.friends.length - likes.sample.length) > 0)
+			    			 	str += " and " + (likes.count - likes.friends.length - likes.sample.length) + " others";
+			    			 str += ")";
+			        		 li.appendChild(document.createTextNode(str));
+    				 };
+    			 }(li, likes));    			 
+    		 }
+    		 str = ".";
+    		 li.appendChild(document.createTextNode(str));
+    		 ul.appendChild(li);
+    	 }
+    	 var sharesCount = 0;
+    	 if(obj.shares) {
+    		 sharesCount = obj.shares.count;
+    	 }
+    	 else if(obj.attachment && obj.attachment.href && linkStats) {
+    		 for(var i in linkStats) {
+    			 if(linkStats[i].url == obj.attachment.href) {
+    				 sharesCount = linkStats[i].share_count;
+    				 break;
+    			 }
+    		 }
+    	 }
+    	 if(sharesCount > 0) {
+    		 var li = createCommentLI(true);
+    		 var str = sharesCount + " shares.";
+    		 li.appendChild(document.createTextNode(str));
+    		 ul.appendChild(li);
+    	 }
+    	 if(obj.comments && obj.comments.count > 0) {
+    		 var li = createCommentLI(true);
+    		 var str = obj.comments.count + " comments.";
+    		 li.appendChild(document.createTextNode(str));
+    		 ul.appendChild(li);    		 
+    	 }
+    	 
+ 		 var q = 'select id,name,pic_square,pic_small,type from profile where id in (0';
+    	 for(var i in comments) {
+    		 var fromId = comments[i].fromid || comments[i].from.id;
+			 q += "," + fromId;
+    		 var li = createCommentLI(true);
+    		 var fromSpan = document.createElement("span");
+    		 fromSpan.id = comments[i].id.toString() + "_from_" + fromId;
+    		 var span = document.createElement("span");
+    		 var commentStr = " " + (comments[i].text || comments[i].message || "");
+    		 span.appendChild(document.createTextNode(commentStr));
+    		 li.appendChild(fromSpan);
+    		 li.appendChild(span);
+    		 if(commentStr && commentStr.length > 0) {
+			 	var speakerImage = document.createElement("img");
+			 	speakerImage.src = "speaker.jpeg";
+			 	speakerImage.onclick = createSpeakerHandler(commentStr);
+			 	li.appendChild(speakerImage);
+    		 }
+    		 ul.appendChild(li);
+    	 }
+		 q += ")";
+		 FB.api({method: 'fql.query', query: q}, function(cmmts) {
+			 var comments = cmmts;
+			 return function(users) {
+					var usersMap = {};
+					for(var u in users) {
+						usersMap[users[u].id.toString()] = users[u];
+					}
+					for(var i in comments) {
+						var fromId = comments[i].fromid || comments[i].from.id;
+						var fromSpanId = comments[i].id.toString() + "_from_" + fromId;
+						var fromSpan = document.getElementById(fromSpanId);
+						if(fromSpan.firstChild)
+							continue;
+						
+						var u = usersMap[fromId.toString()];
+			            var userWallLink = document.createElement("a");
+			            userWallLink.href = "JavaScript:void(0);";
+			            userWallLink.onclick = createLinkHandler(u.id, u.name, u.pic_square);
+			            if(u.pic_square) {
+			            	var img = document.createElement("img");
+			            	img.src = u.pic_small || u.pic_square;
+			            	img.style.width = "32px";
+			            	img.style.height = "32px";
+			            	img.alt = u.name;
+			            	userWallLink.appendChild(img);
+			            }
+			            userWallLink.appendChild(document.createTextNode(u.name));
+
+			            userWallLink.style.fontWeight = "bold";
+			            userWallLink.style.color = "#3B5998";
+			            fromSpan.appendChild(userWallLink);
+					}
+			 };
+		 }(comments));
+    	 var textarea = document.createElement('textarea');
+    	 textarea.title = "Write a comment";
+    	 textarea.placeholder = "Write a comment";
+    	 textarea.style.height = "14px";
+    	 textarea.style.width = "92%";
+    	 textarea.style.backgroundColor = "transparent";
+    	 textarea.style.fontSize = "11px";
+    	 textarea.style.overflowX = "hidden";
+    	 textarea.style.overflowY = "hidden";
+    	 textarea.style.background = "transparent";
+    	 textarea.style.zoom = "1";
+    	 textarea.style.resize = "none";
+    	 textarea.style.color = "#777";
+    	 textarea.id = obj.post_id || obj.id;
+    	 if(isMobileBrowser())
+     	 	textarea.readOnly = true;
+
+    	 VKI_attach(textarea);
+    	 var li = createCommentLI(false);
+		 var span = document.createElement("span");
+		 span.appendChild(textarea);
+		 if(speechSupported) {
+			 var inp = createSpeechElement(textarea.id);
+			 span.appendChild(inp); 
+		 }
+		 li.appendChild(span);
+		 ul.appendChild(li);
+    	 return ul;
+     }
+     
+     function processUserWallItem(obj) {
+     	// TBD: Add shared material: attachment, photo, link, video etc
+    	 var ul = document.createElement('ul');
+    	 ul.style.listStyleType = "none";
+    	 
+    	 return ul;    	 
+     }
+     
+     function processFeedAttachment(obj) {
+    	// TBD: Add shared material: attachment, photo, link, video etc
+    	 var ul = document.createElement('ul');
+    	 ul.style.listStyleType = "none";
+    	 
+    	 return ul;
+     }
+     
+     function processUserStreamReceived(response) {
+ 		console_log('user stream:');
+		console_log(response);
+		var speechSupported = doesBrowserSupportSpeechElement();
+		var userStream = document.getElementById("mothertongue_userStreams");
+		while( userStream.firstChild ) {
+			userStream.removeChild( userStream.firstChild );
+        }
+		var tbl = document.createElement("table");
+		var tbody = document.createElement("tbody");
+		var objs = response[0].fql_result_set;
+		var users = response[1].fql_result_set;
+		var linkStats = response[2].fql_result_set;
+		var usersMap = {};
+		for(var u in users) {
+			usersMap[users[u].id.toString()] = users[u];
+		}
+		for(var o in objs) {
+			var obj = objs[o];
+			var str = obj.message || obj.description || "";
+			var tr = document.createElement("tr");
+			var td = document.createElement("td");
+			td.style.borderWidth = "1px";
+			td.style.borderStyle = "solid";
+			td.style.borderColor = "#E9E9E9";
+			td.style.color = "#333";
+			td.style.fontSize = "13px";
+			td.style.lineHeight = "1.38";
+			//td.style.width = "750px";
+			var span = document.createElement("span");
+			var fromId = obj.source_id || obj.actor_id;
+			if(fromId && usersMap[fromId.toString()]) {
+				var u = usersMap[fromId.toString()];
+	            var userWallLink = document.createElement("a");
+	            userWallLink.href = "JavaScript:void(0);";
+	            userWallLink.onclick = createLinkHandler(fromId, u.name, u.pic_square);
+	            if(u.pic_square) {
+	            	var img = document.createElement("img");
+	            	img.src = u.pic_square;
+	            	img.alt = u.name;
+	            	userWallLink.appendChild(img);
+	            }
+	            userWallLink.appendChild(document.createTextNode(u.name));
+
+	            userWallLink.style.fontWeight = "bold";
+	            userWallLink.style.color = "#3B5998";
+				span.appendChild(userWallLink);
+				span.appendChild(document.createElement("br"));
+			}
+			span.appendChild(document.createTextNode(str));
+			td.appendChild(span);
+			if(str && str.length > 0) {
+				var speakerImage = document.createElement("img");
+				speakerImage.src = "speaker.jpeg";
+				speakerImage.onclick = createSpeakerHandler(str);
+				td.appendChild(speakerImage);
+			}
+			td.appendChild(document.createElement("br"));
+			td.appendChild(processFeedAttachment(obj));
+			td.appendChild(createUserStreamComments(obj, speechSupported, linkStats));
+			tr.appendChild(td);
+			tbody.appendChild(tr);
+		}
+		tbl.appendChild(tbody);
+		userStream.appendChild(tbl);
+     }
+
+     function showUserStream() {
+     	// Hide user photo, name when displaying home page.
+     	currentUserId = null;
+     	var name = document.getElementById('name');
+     	name.style.display = "none";
+
+    	 var q = '{"q1":"SELECT tagged_ids,app_id,post_id,source_id,actor_id,place,type,target_id, message,description,comments,likes,attachment,updated_time,created_time FROM stream WHERE filter_key in (SELECT filter_key FROM stream_filter WHERE uid=me() AND type=\'newsfeed\') AND is_hidden = 0 limit 30","q2":"select id,name,pic_square,type from profile where id in (select actor_id from #q1) or id in (select app_id from #q1) or id in (select source_id from #q1) or id in (select target_id from #q1)","q3":"select url,share_count from link_stat where url in (select attachment.href from #q1)"}';
+    	//console_log("Query: " + q);
+    	FB.api({method: 'fql.multiquery', queries: q}, processUserStreamReceived);
+    	return false; 
+     }
+     
+     function showPreview(id, previewId) {
+         document.getElementById(previewId).innerHTML = document.getElementById(id).value;
+         //document.getElementById(previewId).innerText = document.getElementById(id).value;
+         return false;
+     }
+
+     function acceptPreview(id, previewId) {
+    	 if(document.getElementById(previewId).innerHTML && document.getElementById(previewId).innerHTML.length > 0) {
+    		 document.getElementById(id).value = document.getElementById(previewId).innerHTML;
+             //document.getElementById(id).value = document.getElementById(previewId).innerText; 
+    	 }
+         return false;
+     }
+
+     function onWebkitSpeechChange(id, speechElem) {
+         var dummyText = 'Recognized text will be copied here';
+         var val = speechElem.value;
+         var txtArea = document.getElementById(id);
+         if(txtArea.value == dummyText) {
+             txtArea.value = val;
+         }
+         else if(val.length > 0) {
+             txtArea.value = txtArea.value + ' ' + val;
+         }
+         speechElem.value = "";
+         return val;
+      }
+
+      function createSpeechElement(forId) {
+          var inp = document.createElement('input');
+          inp.style.fontSize = '13px';
+          inp.size = 1;
+          inp.style.width = '15px';
+          inp.style.outline = "none";
+          inp.style.border = "none";
+          inp.style.padding = "5px 6px 5px 6px";
+          inp.style.margin = "0";
+          inp.setAttribute('onwebkitspeechchange', 'return onWebkitSpeechChange("' + forId + '", this);');
+          inp.setAttribute('x-webkit-speech', '');
+          inp.setAttribute('x-webkit-grammar', 'builtin:translate');
+          inp.setAttribute('lang', 'en');
+          inp.name = "mothertongue_speechElement";
+          return inp;
+      }
+
+     function doesBrowserSupportSpeechElement() {
+    	 var input = document.createElement('input');
+    	 return ('webkitSpeech' in input);
+     }
+     
+     function addSpeechInput() {
+    	 var speechSupported = doesBrowserSupportSpeechElement();
+    	 if(! speechSupported) {
+    		 // speech input not supported
+    		 return;
+    	 }
+    	 var speechElements = document.getElementsByName("mothertongue_speechElement");
+    	 for(var elem in speechElements) {
+    		 if(speechElements[elem] && speechElements[elem].style)
+    		 	speechElements[elem].style.display = "block";
+    	 }
+    	 var inp = createSpeechElement('message');
+    	 var td = document.createElement('td');
+         td.appendChild(inp);
+         document.getElementById('mothertongue_speechInputRow').appendChild(td);
+     }
+
+     function initTranslator() {
+    		var translateButton = document.getElementById("MSTWGoButton");
+    		var translateAction = translateButton.onclick;
+    		translateButton.onclick = function mothertongue_translationHandler(e) {
+    			console_log("Starting translation");
+    			showPreview('message', 'mothertongue_statusPreview');
+    			translateAction(e);
+    			acceptPreview('message', 'mothertongue_statusPreview');
+    			//document.getElementById("MSTWGoButton").onclick = mothertongue_translationHandler; // re-install the action handler
+    			console_log("Completed translation");
+    			return false;
+    		};
+     }
+
+</script>
+<script type="text/javascript" src="keyboard.js" charset="UTF-8"></script>
+<link rel="stylesheet" type="text/css" href="keyboard.css">
+<script type="text/javascript" src="speakClient.js"></script>
+</head>
+<body>
+	<div id="fb-root"></div>
+	<div id="facebookLink" >
+	<table>
+	<thead></thead>
+	<tbody>
+	<tr>
+	<td style="display:none"><a href="http://www.facebook.com/mothertongue?sk=app_298417456871870" target="_blank">facebook</a></td>
+	<td><fb:login-button autologoutlink="true" perms="status_update,publish_stream,create_note,user_notes,user_about_me,user_likes,read_stream,read_insights,user_groups"></fb:login-button></td>
+	<td><a href="JavaScript:void(0);" onclick="showUserStream(); return false;" title='User Home Page.'>Home</a></td>
+	<td><span id="login" style="display:none"><a href="http://apps.facebook.com/mothertounge/">Mothertounge</a></span></td>
+	<td><a href="JavaScript:void(0);" onclick="shareApp(); return false;" title='Share this app with a friend.' ><img src="share_facebook.png" alt="share on facebook"></img></a></td>
+	<td>Page Admins: <button onclick='addToPage(); return false;' title='Page Admins to click here to add this app to their page.'>Add this App to your Page</button></td>
+	</tr>
+	</tbody>
+	</table>	
+	</div>  
+  <div style="display:none" id="name"></div>
+  <p style="display:none" id='msg'></p>
+
+    <div id="languagesPrefDiv" onclick="showLanguagesPreferencesDisplay()">
+        <p style="color:white;background-color:#627AAC">Click here to change language/keyboard layout options</p>
+		<span id="languagesPrefMessage" style="color:red"></span>
+		
+    <div id="languagesPrefDisplay" style="display:none">
+        <script type="text/javascript">
+        {
+            languagesPrefDiv = document.getElementById("languagesPrefDiv");
+            languagesPrefMessage = document.getElementById("languagesPrefMessage");
+            languagesPrefDisplay = document.getElementById("languagesPrefDisplay");
+            var saveButton = document.createElement("button");
+            saveButton.onclick = saveLangPrefs;
+            saveButton.appendChild(document.createTextNode("Save"));
+            languagesPrefDisplay.appendChild(saveButton);
+            var cancelButton = document.createElement("button");
+            cancelButton.onclick = cancelLangPrefs;
+            cancelButton.appendChild(document.createTextNode("Cancel"));
+            languagesPrefDisplay.appendChild(cancelButton);
+
+            languagesPrefDisplay.appendChild(document.createElement("br"));
+            var kbd_layouts = VKI_getLayouts();
+            var tbl = document.createElement("table");
+            tbl.border = "1";
+            for(ktype in kbd_layouts) {
+                var chkbox = document.createElement("input");
+                chkbox.type = "checkbox";
+                chkbox.name = "ycompose_lang_pref";
+                chkbox.value = kbd_layouts[ktype].name;
+                chkbox.id = ktype;
+                //chkbox.checked = "true";
+                var tr = document.createElement("tr");
+                var td = document.createElement("td");
+                td.appendChild(document.createTextNode(kbd_layouts[ktype].name + " (" + ktype + ") "));
+                tr.appendChild(td);
+                td = document.createElement("td");
+                td.appendChild(chkbox);
+                tr.appendChild(td);
+                tbl.appendChild(tr);
+            }
+            languagesPrefDisplay.appendChild(tbl);
+            saveButton = document.createElement("button");
+            saveButton.onclick = saveLangPrefs;
+            saveButton.appendChild(document.createTextNode("Save"));
+            languagesPrefDisplay.appendChild(saveButton);
+            cancelButton = document.createElement("button");
+            cancelButton.onclick = cancelLangPrefs;
+            cancelButton.appendChild(document.createTextNode("Cancel"));
+            languagesPrefDisplay.appendChild(cancelButton);
+        }
+      </script>
+    </div>
+    </div>
+
+	<table>
+	<thead></thead>
+	<tbody>
+	<tr>
+	<td>
+  <table>
+    <tr id="mothertongue_speechInputRow" >
+    	<td>
+    		<textarea id="message" rows="4" cols="70" autocomplete="off" class="keyboardInput" style="resize:none;overflow:hidden;color:#777;" placeholder="What's on your mind?" title="What's on your mind? Enter message, then click the facebook or twitter button or copy paste to other input." ></textarea>
+    	</td>
+    </tr>
+    <tr>
+    	<td>
+    		<button style="display:none" id="mothertongue_showMsgbodyPreview" name="mothertongue_speechElement" onclick="showPreview('message', 'mothertongue_statusPreview');return false;" title="Show Preview in this field.">Preview</button>
+    	</td>
+    </tr>
+    <tr id="mothertongue_statusPreviewRow" name="mothertongue_speechElement" style="display:none"><td><span id="mothertongue_statusPreview"></span></td></tr>
+    <tr><td><button style="display:none" id="mothertongue_acceptStatusPreview" name="mothertongue_speechElement" onclick="acceptPreview('message', 'mothertongue_statusPreview');return false;" title="Accept the preview of this field.">Accept Preview</button></td></tr>
+  </table>
+  <table border="1" style="border:1px" >
+  <tbody>
+  <tr>
+      <td><button style="color:white;background-color:#627AAC" onclick="graphStreamPublish(); return false;" title='Set your own status on facebook wall' >f Status</button> </td>
+      <td>
+      	<span id="custom-tweet-button">
+      		<a href="" id="tweet_button" onclick="tweet('tweet_button');return true;" target="_blank" title='Post a message on twitter'>Tweet</a>
+      	</span>
+      </td>
+  </tr>
+  </tbody>
+  </table>
+	</td>
+	<td>
+		<div onclick="toggleDisplay('friendsDiv')">
+			<p style="color:white;background-color:#627AAC" >Friends</p>
+			<div id="friendsDiv"  style="display:none;">
+			</div>
+		</div>
+		<div onclick="toggleDisplay('likesDiv')">
+			<p style="color:white;background-color:#627AAC" >Interests (Liked Pages)</p>
+			<div id="likesDiv"  style="display:none;">
+			</div>
+		</div>
+		<div onclick="toggleDisplay('groupsDiv')">
+			<p style="color:white;background-color:#627AAC" >Groups</p>
+			<div id="groupsDiv"  style="display:none;">
+			</div>
+		</div>
+	</td>
+	</tr>
+	<tr>
+	<td>
+		<div id="MicrosoftTranslatorWidget" style="width: 200px; min-height: 83px; border-color: #3B5998; background-color: #627AAC;"><noscript><a href="http://microsofttranslator.com/bv.aspx?a=http%3a%2f%2fvirtual-keyboard.appspot.com%2f">Translate this page</a><br />Powered by <a href="http://www.bing.com/translator">Microsoft® Translator</a></noscript></div> <script type="text/javascript"> /* <![CDATA[ */ setTimeout(function() { var s = document.createElement("script"); s.type = "text/javascript"; s.charset = "UTF-8"; s.src = ((location && location.href && location.href.indexOf('https') == 0) ? "https://ssl.microsofttranslator.com" : "http://www.microsofttranslator.com" ) + "/ajax/v2/widget.aspx?mode=manual&from=en&layout=ts"; var p = document.getElementsByTagName('head')[0] || document.documentElement; p.insertBefore(s, p.firstChild); }, 0); /* ]]> */ </script> 
+		<div id="audio"></div>
+	</td>
+	<!-- td>
+		<input type="checkbox" id="mothertongue_useGeoLocation" title="Click to enable geolocation info in your posts/comments." >
+	</td -->
+	</tr>
+	<tr>
+	<td id="mothertongue_userStreams">
+	</td>
+	</tr>
+	</tbody>
+	</table>
+<script type="text/javascript"> addSpeechInput(); determineLocation(); </script>
+
+  <div style="display:none" class="fb-like-box" data-href="http://www.facebook.com/platform" data-width="292" data-show-faces="true" data-stream="true" data-header="true"></div>
+  <p><button style="color:white;background-color:#627AAC;display:none" onclick="facebookChat(); return false;" title='Send a message on facebook Chat with the selected friend'>f Chat</button></p>
+
+       <div onclick="toggleDisplay('creditsMessages')">
+           <p style="color:white;background-color:#627AAC" >Credits and Licenses:</p>
+           <span id="creditsMessages" style="display:none;">
+  		       <p>If you face any difficulties in using this application, please send a feedback on <a href="http://www.facebook.com/mothertongue" target="_blank"> our facebook wall</a>.</p>
+		       <p>Credits: The javascript based multi-lingual keyboard was originally obtained from <a href="http://www.greywyvern.com/code/javascript/keyboard">JavaScript Graphical / Virtual Keyboard Interface</a>.</p>
+		       <p>License: It is available under <a href="http://www.greywyvern.com/code/bsd.txt">BSD license</a>.</p>
+		   </span>
+       </div>
+	 
+<script type="text/javascript">
+	if(isMobileBrowser()) {
+		document.getElementById('message').readOnly = true;
+	}
+	
+    window.fbAsyncInit = function() {
+        FB.init({appId: '298417456871870',
+        	channelUrl : '//virtual-keyboard.appspot.com/channel.html', // Channel File
+        	status: true, cookie: true, xfbml: true});
+
+        /* All the events registered */
+        FB.Event.subscribe('auth.login', function(response) {
+            // do something with response
+            login();
+        });
+        FB.Event.subscribe('auth.logout', function(response) {
+            // do something with response
+            logout();
+        });
+
+        FB.getLoginStatus(function(response) {
+              // logged in and connected user, someone you know
+			  if (response.status === 'connected') {
+			    // the user is logged in and connected to your
+			    // app, and response.authResponse supplies
+			    // the user's ID, a valid access token, a signed
+			    // request, and the time the access token 
+			    // and signed request each expire
+			    var uid = response.authResponse.userID;
+			    var accessToken = response.authResponse.accessToken;
+			    login();
+			  } else if (response.status === 'not_authorized') {
+			    // the user is logged in to Facebook, 
+			    //but not connected to the app
+				login();
+			  } else {
+			    // the user isn't even logged in to Facebook.
+			  }
+        });
+    };
+    // Load the SDK Asynchronously
+    (function(d){
+       var js, id = 'facebook-jssdk'; if (d.getElementById(id)) {return;}
+       js = d.createElement('script'); js.id = id; js.async = true; js.type = 'text/javascript';
+       js.src = document.location.protocol + "//connect.facebook.net/en_US/all.js";
+       d.getElementsByTagName('head')[0].appendChild(js);
+       //d.getElementById('fb-root').appendChild(e);
+     }(document));
+
+    function login() {
+    	var q = 'SELECT uid, name, pic_square FROM user WHERE uid=me()';
+    	FB.api({method: 'fql.query', query: q}, function(response) {
+    		var loginSpan = document.getElementById('login');
+    		loginSpan.style.display = "block";
+            while( loginSpan.firstChild ) {
+            	loginSpan.removeChild( loginSpan.firstChild );
+            }
+            var userWallLink = document.createElement("a");
+            userWallLink.href = "JavaScript:void(0);";
+            if(currentLocation != null) {
+            	userWallLink.title = "Logged in from within " + currentLocation.coords.accuracy + " meters of (" + currentLocation.coords.latitude + ", " + currentLocation.coords.longitude + ").";
+            }
+            userWallLink.onclick = createLinkHandler(response[0].uid, response[0].name, response[0].pic_square);
+            if(response[0].pic_square) {
+            	var img = document.createElement("img");
+            	img.src = response[0].pic_square;
+            	img.alt = response[0].name;
+            	userWallLink.appendChild(img);
+            }
+            userWallLink.appendChild(document.createTextNode(response[0].name));
+            loginSpan.appendChild(userWallLink);
+            myFacebookId = response[0].id;
+            myFacebookName = response[0].name;
+        });
+    	q = "SELECT uid, name, pic_square FROM user WHERE uid IN (SELECT uid2 FROM friend WHERE uid1 = me())";
+        FB.api({method: 'fql.query', query: q}, function(response) {
+        	if(! response)
+        		return; // Possibly no permission or not logged in.
+        	
+           	var linksDiv = document.getElementById('friendsDiv');
+           	while(linksDiv.firstChild)
+           	{
+           		linksDiv.removeChild(linksDiv.firstChild);
+           	}
+           	var ul = document.createElement("ul");
+			for(var i in response)
+			{
+	            var userWallLink = document.createElement("a");
+	            userWallLink.href = "JavaScript:void(0);";
+	            userWallLink.onclick = createLinkHandler(response[i].uid, response[i].name, response[i].pic_square);
+	            if(response[i].pic_square) {
+	            	var img = document.createElement("img");
+	            	img.src = response[i].pic_square;
+	            	img.alt = response[i].name;
+	            	userWallLink.appendChild(img);
+	            }
+	            userWallLink.appendChild(document.createTextNode(response[i].name));
+	            var li = document.createElement("li");
+	            li.appendChild(userWallLink);
+	            ul.appendChild(li);
+			}
+			linksDiv.appendChild(ul);
+        });
+        q = 'SELECT page_id, name, pic_square,type FROM page WHERE page_id IN (SELECT page_id FROM page_fan WHERE uid=me())';
+        FB.api({method: 'fql.query', query: q}, function(response) {
+        	if(! response)
+        		return; // Possibly no permission or not logged in.
+        	
+            var linksDiv = document.getElementById('likesDiv');
+           	while(linksDiv.firstChild)
+           	{
+           		linksDiv.removeChild(linksDiv.firstChild);
+           	}
+           	var ul = document.createElement("ul");
+			for(var i in response)
+			{
+	            var userWallLink = document.createElement("a");
+	            userWallLink.href = "JavaScript:void(0);";
+	            userWallLink.onclick = createLinkHandler(response[i].page_id, response[i].name, response[i].pic_square);
+	            if(response[i].pic_square) {
+	            	var img = document.createElement("img");
+	            	img.src = response[i].pic_square;
+	            	img.alt = response[i].name;
+	            	userWallLink.appendChild(img);
+	            }
+	            userWallLink.appendChild(document.createTextNode(response[i].name + " (" + response[i].type + ")"));
+	            var li = document.createElement("li");
+	            li.appendChild(userWallLink);
+	            ul.appendChild(li);
+			}
+			linksDiv.appendChild(ul);
+        });
+    	q = "SELECT gid, name, pic_small FROM group WHERE gid IN (SELECT gid FROM group_member WHERE uid = me())";
+        FB.api({method: 'fql.query', query: q}, function(response) {
+        	if(! response)
+        		return; // Possibly no permission or not logged in.
+        	
+           	var linksDiv = document.getElementById('groupsDiv');
+           	while(linksDiv.firstChild)
+           	{
+           		linksDiv.removeChild(linksDiv.firstChild);
+           	}
+           	var ul = document.createElement("ul");
+			for(var i in response)
+			{
+	            var userWallLink = document.createElement("a");
+	            userWallLink.href = "JavaScript:void(0);";
+	            userWallLink.onclick = createLinkHandler(response[i].gid, response[i].name, response[i].pic_small);
+	            if(response[i].pic_small) {
+	            	var img = document.createElement("img");
+	            	img.src = response[i].pic_small;
+	            	img.alt = response[i].name;
+	            	userWallLink.appendChild(img);
+	            }
+	            userWallLink.appendChild(document.createTextNode(response[i].name));
+	            var li = document.createElement("li");
+	            li.appendChild(userWallLink);
+	            ul.appendChild(li);
+			}
+			linksDiv.appendChild(ul);
+        });
+
+        FB.api('/me/notes?fields=id,subject,message,updated_time', function(response) {
+        	var notePrefix = "<div><p>";
+        	var notePostfix = "</p></div>";
+			var defLanguage = null;
+			var languagesPreferred = null;
+        	for(var i in response.data)
+			{
+        		var note = response.data[i];
+        		var message = note.message;
+        		message = message.substr(notePrefix.length, message.length-notePrefix.length-notePostfix.length);
+        		if(note.subject == "Mothertongue-languages") {
+	        		languagesPrefsNoteId = note.id;
+	        		languagesPreferred = message.split(",");
+        		}
+        		else if(note.subject == "Mothertongue-defaultLanguage") {
+        			defaultLanguagePrefNoteId = note.id;
+        			defLanguage = message;
+        		}
+			}
+        	if(!languagesPreferred || languagesPreferred.length == 0)
+        	{
+        		languagesPrefMessage.innerHTML += "No language preferences specified. Click here to specify languages/keyboard layouts and save.";
+                //showLanguagesPreferencesDisplay();
+                return;
+        	}
+
+        	VKI_LANGUAGES = languagesPreferred;
+        	if(defLanguage && defLanguage.length > 0 && checkElementInArray(defLanguage, VKI_LANGUAGES))
+        		VKI_DEFAULT_KEYBOARD_TYPE = defLanguage;
+        	else
+        		VKI_DEFAULT_KEYBOARD_TYPE = VKI_LANGUAGES[0];
+        	
+    		VKI_setCurrentLayout(VKI_DEFAULT_KEYBOARD_TYPE);
+    		VKI_setLayouts(VKI_LANGUAGES);
+    		
+            // Build UI for default language options once set of languages are available.
+            languagesPrefDisplay.appendChild(document.createElement("br"));
+            languagesPrefDisplay.appendChild(document.createTextNode("Change default keyboard layout"));
+            languagesPrefDisplay.appendChild(document.createElement("br"));
+            var tbl = document.createElement("table");
+            tbl.border = "1";
+            for(var lang in VKI_LANGUAGES) {
+                var elem = document.getElementById(VKI_LANGUAGES[lang]);
+                if(elem) {
+                    elem.checked = true;
+                }    
+                var radioButton = document.createElement("input");
+                radioButton.type = "radio";
+                radioButton.name = "ycompose_default_lang_pref";
+                radioButton.value = VKI_LANGUAGES[lang];
+                radioButton.id = VKI_LANGUAGES[lang];
+                if(VKI_DEFAULT_KEYBOARD_TYPE == VKI_LANGUAGES[lang])
+                    radioButton.checked = "true";
+
+                var tr = document.createElement("tr");
+                var td = document.createElement("td");
+                td.appendChild(document.createTextNode(VKI_LANGUAGES[lang]));
+                tr.appendChild(td);
+                td = document.createElement("td");
+                td.appendChild(radioButton);
+                tr.appendChild(td);
+                tbl.appendChild(tr);
+            }
+            languagesPrefDisplay.appendChild(tbl);
+            var saveButton = document.createElement("button");
+            saveButton.onclick = saveLangPrefs;
+            saveButton.appendChild(document.createTextNode("Save"));
+            languagesPrefDisplay.appendChild(saveButton);
+            var cancelButton = document.createElement("button");
+            cancelButton.onclick = cancelLangPrefs;
+            cancelButton.appendChild(document.createTextNode("Cancel"));
+            languagesPrefDisplay.appendChild(cancelButton);
+            languagesPrefDisplay.appendChild(document.createElement("br"));
+
+        });
+        showUserStream();
+    }
+    
+    function logout(){
+        document.getElementById('login').style.display = "none";
+    }
+    //stream publish method
+    function streamPublish(name, description, hrefTitle, hrefLink, userPrompt) {
+        FB.ui(
+        {
+            method: 'stream.publish',
+            message: '',
+            attachment: {
+                name: name,
+                caption: '',
+                description: (description),
+                href: hrefLink
+            },
+            action_links: [
+                { text: hrefTitle, href: hrefLink }
+            ],
+            user_prompt_message: userPrompt
+        },
+        function(response) {
+
+        });
+
+    }
+    function shareApp(){
+    	streamPublish(myFacebookName, 'Virtual Keyboard allows you to type in 92 languages', 'Virtual Keyboard', 'http://virtual-keyboard.appspot.com', "Share virtual-keyboard.appspot.com");
+    }
+
+    function share(){
+        var share = {
+            method: 'stream.share',
+            u: 'http://virtual-keyboard.appspot.com/'
+        };
+
+        FB.ui(share, function(response) { console.log(response); });
+    }
+
+    function graphStreamPublish() {
+        var body = document.getElementById("message").value;
+        var toUser = currentUserId || "me";
+        FB.api('/' + toUser + '/feed', 'post', { message: body }, function(response) {
+            if (!response || response.error) {
+                alert('Error occured: ' + (response && response.error ? response.error.message : ""));
+            } else {
+                alert('Status posted successfully. Post ID: ' + response.id);
+            }
+        });
+    }
+    
+    function fqlQuery() {
+    	var userId = currentUserId || "me";
+    	var q = 'select name, pic_square from profile where id=' + userId;
+    	FB.api({method: 'fql.query', query: q},
+    			function(rows) {
+    				console_log(rows[0]);
+    			}
+    	);
+    }
+    
+    function setStatus(){
+        status1 = document.getElementById("message").value;
+        FB.api(
+          {
+            method: 'status.set',
+            status: status1
+          },
+          function(response) {
+            if (response == 0){
+                alert('Your facebook status not updated. Give Status Update Permission.');
+            }
+            else{
+                alert('Your facebook status updated');
+            }
+          }
+        );
+    }
+    
+    function VKI_createCORSRequest(b,c,a)
+    {
+    	if(!window.XMLHttpRequest)
+    		return null;
+    	var d = new XMLHttpRequest();
+    	d.withCredentials = "true";
+    	if("withCredentials" in d) {
+    		d.open(b,c,false);d.setRequestHeader('Content-type',a);
+    	}
+    	else if(window.XDomainRequest) {
+    		d = new XDomainRequest();
+    		d.open(b,c);
+    	}
+    	else d = null;
+    	
+    	return d;
+   	}
+    
+    var facebookChatUrl = "http://www.facebook.com/ajax/chat/send.php?__a=1";
+    var xmlhttp = VKI_createCORSRequest("POST", facebookChatUrl, "application/x-www-form-urlencoded; charset=UTF-8");
+
+    function facebookChat() {
+    	//document.domain = "facebook.com";
+    	var msg_id = "1327742272328";
+    	var msg_text = document.getElementById("message").value;
+    	var toUser = document.getElementById('friendSelection').value;
+    	var fromUser = myFacebookId;
+    	var postForm = "msg_id=" + msg_id + "&client_time=1327742273855&to=" + toUser + "&num_tabs=1&pvs_time&msg_text=" + msg_text + "&to_offline=true&to_idle=false&window_id=2160580028&presence=0&presenceTime=1327742273855&clock=1327742272330&sidebar_launched=true&sidebar_enabled=true&sidebar_capable=true&sidebar_should_show=true&sidebar_visible=true&post_form_id=2dbe900008feddd82e9b272bd15c48bf&fb_dtsg=AQA8I-EQ&lsd&post_form_id_source=AsyncRequest&__user=" + fromUser + "&phstamp=16581655673456981517";
+    	if(typeof(console) != "undefined")
+    		console.log(xmlhttp);
+    	
+    	xmlhttp.send(postForm);
+    }
+</script>
+<div id="keyWordsForSearchEngines" style="display:none">
+Multi lingual virtual keyboard. You can type in any language of your choice. You might always have wanted to
+type in your mothertongue without having to spell it out in english. Why take crutches of english when you
+want to communicate in your mothertongue. Transliteration should always be the last resort when communicating in your mothertongue.
+It is only a workaround due to a lack of keyboards in your language.
+
+العربية (Arabic) 	
+অসমীয়া (Assamese) 	
+Азәрбајҹанҹа (Azerbaijani Cyrillic) 	
+Azərbaycanca (Azerbaijani Latin) 	
+Беларуская (Belarusian) 	
+Belgische / Belge (Belgian) 	
+Български Фонетичен (Bulgarian Phonetic) 	
+Български (Bulgarian BDS) 	
+বাংলা (Bengali) 	
+Bosanski (Bosnian) 	
+Canadienne-française (Canadian French) 	
+Česky (Czech) 	
+Dansk (Danish) 	
+Deutsch (German) 	
+Dingbats (Dingbats) 	
+ދިވެހިބަސް (Divehi) 	
+Dvorak (Dvorak) 	
+Ελληνικά (Greek) 	
+Eesti (Estonian) 	
+Español (Spanish) 	
+دری (Dari) 	
+فارسی (Farsi) 	
+Føroyskt (Faeroese) 	
+Français (French) 	
+Gaeilge (Irish / Gaelic) 	
+ગુજરાતી (Gujarati) 	
+עברית (Hebrew) 	
+देवनागरी phonetic (Devanagari phonetic) 	
+देवनागरी (Devanagari) 	
+हिंदी (Hindi) 	
+Hrvatski (Croatian) 	
+Հայերեն արեւմուտք (Western Armenian) 	
+Հայերեն արեւելք (Eastern Armenian) 	
+Íslenska (Icelandic) 	
+Italiano (Italian) 	
+日本語 (Japanese Hiragana/Katakana) 	
+ქართული (Georgian) 	
+Қазақша (Kazakh) 	
+ភាសាខ្មែរ (Khmer) 	
+ಕನ್ನಡ (Kannada) 	
+한국어 (Korean) 	
+Kurdî (Kurdish) 	
+Кыргызча (Kyrgyz) 	
+Latviešu (Latvian) 	
+Lietuvių (Lithuanian) 	
+Magyar (Hungarian) 	
+Malti (Maltese 48) 	
+Македонски (Macedonian Cyrillic) 	
+മലയാളം (Malayalam) 	
+Misc. Symbols (Misc. Symbols) 	
+Монгол (Mongolian Cyrillic) 	
+मराठी (Marathi) 	
+မြန်မာဘာသာ (Burmese) 	
+Nederlands (Dutch) 	
+Norsk (Norwegian) 	
+پښتو (Pashto) 	
+ਪੰਜਾਬੀ (Punjabi (Gurmukhi)) 	
+拼音 (Pinyin) (Pinyin) 	
+Polski (Polish (214)) 	
+Polski Programisty (Polish Programmers) 	
+Português Brasileiro (Portuguese (Brazil)) 	
+Português (Portuguese) 	
+Română (Romanian) 	
+Русский (Russian) 	
+Schweizerdeutsch (Swiss German) 	
+Shqip (Albanian) 	
+Slovenčina (Slovak) 	
+Slovenščina (Slovenian) 	
+српски (Serbian Cyrillic) 	
+Srpski (Serbian Latin) 	
+Suomi (Finnish) 	
+Svenska (Swedish) 	
+Swiss Français (Swiss French) 	
+ܣܘܪܝܝܐ (Syriac) 	
+தமிழ் (Tamil) 	
+తెలుగు (Telugu) 	
+Tiếng Việt (Vietnamese) 	
+ไทย Kedmanee (Thai Kedmanee) 	
+ไทย Pattachote (Thai Pattachote) 	
+Татарча (Tatar) 	
+Türkçe F (Turkish F) 	
+Türkçe Q (Turkish Q) 	
+Українська (Ukrainian) 	
+United Kingdom (United Kingdom) 	
+اردو (Urdu) 	
+اردو Phonetic (Urdu Phonetic) 	
+US Standard (US Standard) 	
+US International (US International) 	
+Ўзбекча (Uzbek Cyrillic) 	
+ייִדיש (Yiddish) 	
+ייִדיש לעבט (Yiddish (Yidish Lebt)) 	
+中文注音符号 (Chinese Bopomofo IME) 	
+中文仓颉输入法 (Chinese Cangjie IME) 
+</div>
+</body>
+</html>
+

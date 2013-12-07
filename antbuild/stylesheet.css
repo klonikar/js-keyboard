@@ -1,0 +1,33 @@
+h1 {
+  font-size: 16pt;
+  font-style: normal;
+  text-align: center;
+  font-family: Verdana;
+  font-weight: bolder;
+  text-transform: none;
+}
+h3 {
+  font-family: verdana;
+  font-size: 13pt;
+  font-weight: bold;
+  text-align: left;
+}
+td {
+  background-color: #cccccc;
+  display: table-cell;
+}
+p {
+  font-size: 11pt;
+  font-family: Tahoma;
+  font-weight: normal;
+}
+h2 {
+  font-size: 11pt;
+  font-family: verdana;
+  font-weight: bold;
+}
+
+.home
+{
+	background-color: green;
+}
