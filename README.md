@@ -5,7 +5,7 @@ A javascript virtual keyboard derived from http://www.greywyvern.com/code/javasc
 * keyboard support,
 * many phonetic layouts (See note below for phonetic layouts),
 * tooltips/hints for keys in all Indian languages,
-* audio hints for devanagari phonetic layouts.
+* audio hints for devanagari phonetic layouts (This makes it a speaking keyboard).
 * Can configure list of keyboards in the dropdown instead of default all
 
 NOTE: Using phonetic layouts, you can easily type in any language on standard english keyboards. Coupled with tooltips, you can even type in languages you don't even know. A live demo can be seen on https://apps.facebook.com/mothertounge/
