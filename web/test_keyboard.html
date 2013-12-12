@@ -1,0 +1,100 @@
+<html>
+    <head>
+       <script type="text/javascript">
+       VKI_USERKEYBOARD = "US Standard";
+       VKI_LANGUAGES = ["\u0926\u0947\u0935\u0928\u093e\u0917\u0930\u0940 phonetic", "US Standard", "US International", "Misc. Symbols", "\u0c95\u0ca8\u0ccd\u0ca8\u0ca1 phonetic", "\u0ba4\u0bae\u0bbf\u0bb4\u0bcd phonetic", "\u0c24\u0c46\u0c32\u0c41\u0c17\u0c41 phonetic", "\u0d2e\u0d32\u0d2f\u0d3e\u0d33\u0d02 phonetic", "\u0a97\u0ac1\u0a9c\u0ab0\u0abe\u0aa4\u0ac0 phonetic", "\u09ac\u09be\u0982\u09b2\u09be phonetic", "\u0a2a\u0a70\u0a1c\u0a3e\u0a2c\u0a40 phonetic", "\u0b13\u0b5c\u0b3f\u0b06 phonetic", "Chinese Bopomofo IME", "Chinese Cangjie IME"];
+
+       var languagesPrefDisplay = null;
+       var languagesPrefMessageDiv = null;
+
+       function console_log(str) {
+           if(typeof(console) != "undefined")
+               console.log(str);
+       }
+
+       function showLanguagesPreferencesDisplay(e) {
+           languagesPrefDisplay.style.display = ""; 
+           console_log(languagesPrefDisplay);
+       }
+
+       function saveLangPrefs(e) {
+           var allLanguagesCheckboxes = document.getElementsByName("ycompose_lang_pref");
+           var selectedLanguages = [];
+           for(var elem in allLanguagesCheckboxes) {
+               if(allLanguagesCheckboxes[elem].id && allLanguagesCheckboxes[elem].checked) {
+                   selectedLanguages.push(allLanguagesCheckboxes[elem].id);
+               }
+           }
+           if(typeof(console) != "undefined") {
+               console_log("current layout: " + VKI_getCurrentLayout());
+               console_log("selected languages: " + selectedLanguages);
+           }
+           if(selectedLanguages && selectedLanguages.length > 0)
+           {
+               //VKI_setCurrentLayout(selectedLanguages[0]);
+               VKI_setLayouts(selectedLanguages);
+           }
+           // Hide the meet-and-greet dialog.
+           languagesPrefDisplay.style.display = "none";
+           console_log(languagesPrefDisplay);
+           e.stopPropagation();
+       }
+   </script>
+   <script type="text/javascript" src="keyboard.js" charset="UTF-8"></script>
+   <link rel="stylesheet" type="text/css" href="keyboard.css">
+   </head>
+   <body>
+    <div id="languagesPrefMessage" onclick="showLanguagesPreferencesDisplay()">
+        <p style="color:red;background-color:cyan">Click here to change language/keyboard layout options</p>
+        <p>This application was built by Kiran Lonikar. If you face any difficulties in using the keyboard, please send an email to me at <a href="mailto:klonikar@yahoo.com">klonikar@yahoo.com</a></p>
+
+    <div id="languagesPrefDisplay" style="display:none">
+        <script type="text/javascript">
+        {
+            languagesPrefMessageDiv = document.getElementById("languagesPrefMessage");
+            languagesPrefDisplay = document.getElementById("languagesPrefDisplay");
+            var saveButton = document.createElement("button");
+            saveButton.onclick = saveLangPrefs;
+            saveButton.appendChild(document.createTextNode("Save"));
+            languagesPrefDisplay.appendChild(saveButton);
+            languagesPrefDisplay.appendChild(document.createElement("br"));
+            var kbd_layouts = VKI_getLayouts();
+            var tbl = document.createElement("table");
+            tbl.border = "1";
+            for(ktype in kbd_layouts) {
+                var chkbox = document.createElement("input");
+                chkbox.type = "checkbox";
+                chkbox.name = "ycompose_lang_pref";
+                chkbox.value = kbd_layouts[ktype].name;
+                chkbox.id = ktype;
+                //chkbox.checked = "true";
+                var tr = document.createElement("tr");
+                var td = document.createElement("td");
+                td.appendChild(document.createTextNode(ktype + " (" + kbd_layouts[ktype].name + ") "));
+                tr.appendChild(td);
+                td = document.createElement("td");
+                td.appendChild(chkbox);
+                tr.appendChild(td);
+                tbl.appendChild(tr);
+            }
+            languagesPrefDisplay.appendChild(tbl);
+            saveButton = document.createElement("button");
+            saveButton.onclick = saveLangPrefs;
+            saveButton.appendChild(document.createTextNode("Save"));
+            languagesPrefDisplay.appendChild(saveButton);
+        }
+        </script>
+    </div>
+    </div>
+
+   	<table>
+            <tr><td><b>Subject:</b></td><td><input id="subject" type="text" class="keyboardInput"></textarea></td></tr>
+	    <tr></tr>
+	    <tr></tr>
+	    <tr><td><b>Message:</b></td><td><textarea id="msgbody" cols="60" rows="15" class="keyboardInput"></textarea> </td></tr>
+	    <tr>
+            </tr>
+        </table>
+</body>
+</html>
+
